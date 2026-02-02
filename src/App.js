@@ -1,7 +1,11 @@
 // App.js
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './ProtectedRoute';
+import Home from './Home';
+import './App.css';
 
-function App() {
+function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -12,17 +16,16 @@ function App() {
     try {
       const response = await fetch('https://fhirassist.rsystems.com:481/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
 
       const data = await response.json();
-
-      if (response.ok && data.token) {
-        localStorage.setItem('authToken', data.token);
-        window.location.href = '/home'; // redirect to your protected route
+      console.log('Full response:', data);
+      if (response.status === 200 && data.idToken) {
+        console.log('Login successful. Token:', data.idToken);
+        localStorage.setItem('authToken', data.idToken);
+        window.location.href = '/home';
       } else {
         setMessage('Login failed');
       }
@@ -32,33 +35,41 @@ function App() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto' }}>
+    <div className="login-container">
       <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>Email:</label><br />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+      <form onSubmit={handleLogin} className="login-form">
+        <div className="form-group">
+          <label>Email:</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
-        <br />
-        <div>
-          <label>Password:</label><br />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+
+        <div className="form-group">
+          <label>Password:</label>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </div>
-        <br />
-        <button type="submit">Login</button>
+
+        <button type="submit" className="login-button">Login</button>
       </form>
-      <p>{message}</p>
+      <p className="message">{message}</p>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
